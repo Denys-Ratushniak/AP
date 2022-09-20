@@ -13,7 +13,7 @@
 4) Activate poetry. Use command in cmd ...\AP\poetry-lab4\Scripts\activate.bat
 
 
-5) Install packages. Use pip install command in cmd ...\AP\requirements.txt
+5) Install packages. Use pip install command in cmd ...\AP\poetry-lab4\requirements.txt
 
 
 6) Run solution. Use python in cmd ...\AP\flask_project\app.py
