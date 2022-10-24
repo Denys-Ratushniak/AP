@@ -1,0 +1,862 @@
+openapi: 3.0.3
+
+info:
+  title: Classroom booking - OpenAPI 3.0
+  description: Service for booking classrooms
+  version: 1.0.11
+  
+servers:
+  - url: url
+  
+tags:
+  - name: classroom
+    description: Everything about Classrooms
+  - name: booking
+    description: Everything about booking
+  - name: user
+    description: Everything about user
+    
+paths:
+  /classroom:
+    post:
+      tags:
+        - classroom
+      summary: Add a new classroom
+      description: Add a new classroom
+      operationId: addClassroom
+      requestBody:
+        description: Create a new classroom
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateClassroom'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/CreateClassroom'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreateClassroom'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Classroom'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Classroom'
+        '401':
+          description: Admin has to be logged in
+        '405':
+          description: Invalid input
+      security:
+        - crbooking_auth:
+            - admin
+            
+  /classroom/findByStatus:
+    get:
+      tags:
+        - classroom
+      summary: Finds Classrooms by status
+      description: Multiple status values can be provided with comma separated strings
+      operationId: findClassroomsByStatus
+      parameters:
+        - name: status
+          in: query
+          description: Status values that need to be considered for filter
+          required: true
+          schema:
+            type: string
+            default: available
+            enum:
+              - available
+              - pending
+              - unavailable
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Classroom'          
+            application/xml:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Classroom'
+        '400':
+          description: Invalid status value
+        '401':
+          description: User has to be logged in
+      security:
+        - crbooking_auth: []
+        
+  /classroom/{classroomId}:
+    get:
+      tags:
+        - classroom
+      summary: Find classroom by ID
+      description: Returns a single classroom
+      operationId: getClassroomById
+      parameters:
+        - name: classroomId
+          in: path
+          description: ID of classroom to return
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Classroom'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Classroom'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Classroom not found
+      security:
+        - crbooking_auth: []
+    put:
+      tags:
+        - classroom
+      summary: Updates a classroom
+      description: Updates a classroom 
+      operationId: updateClassroom
+      parameters:
+        - name: classroomId
+          in: path
+          description: ID of classroom that needs to be updated
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: name
+          in: query
+          description: Name of classroom that needs to be updated
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Status of classroom that needs to be updated
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Classroom'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Classroom'
+        '400':
+          description: Invalid input
+        '401':
+          description: Admin has to be logged in
+      security:
+        - crbooking_auth:
+          - admin
+    delete:
+      tags:
+        - classroom
+      summary: Deletes a classroom
+      description: delete a classroom
+      operationId: deleteClassroom
+      parameters:
+        - name: classroomId
+          in: path
+          description: Classroom id to delete
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Invalid classroom value
+        '401':
+          description: Admin has to be logged in
+      security:
+        - crbooking_auth:
+          - admin
+          
+  /booking/inventory:
+    get:
+      tags:
+        - booking
+      summary: Returns classroom inventories by status
+      description: Returns a list of inventories by status
+      operationId: getInventory
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: integer
+                  format: int32
+        '401':
+          description: admin has to be logged in
+      security:
+        - crbooking_auth: 
+          - admin
+          
+  /booking/order:
+    post:
+      tags:
+        - booking
+      summary: Place an order for a classroom
+      description: Place a new order in the booking
+      operationId: placeOrder
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaceOrder'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/PlaceOrder'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PlaceOrder'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          description: Invalid input
+        '401':
+          description: User has to be logged in
+      security:
+        - crbooking_auth: []
+        
+  /booking/order/{orderId}:
+    get:
+      tags:
+        - booking
+      summary: Find booking order by ID
+      description: Find booking order by ID
+      operationId: getOrderById
+      parameters:
+        - name: orderId
+          in: path
+          description: ID of order that needs to be fetched
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          description: Invalid ID supplied
+        '401':
+          description: user has to be logged in
+        '404':
+          description: Order not found
+      security:
+        - crbooking_auth:
+          - admin
+    put:
+      tags:
+        - booking
+      summary: Update booking order by ID
+      description: Update booking order by ID
+      operationId: updateOrderById
+      parameters:
+        - name: orderId
+          in: path
+          description: ID of order that needs to be updated
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          description: Invalid ID supplied
+        '401':
+          description: user has to be logged in
+        '404':
+          description: Order not found
+      security:
+        - crbooking_auth:
+          - admin
+    delete:
+      tags:
+        - booking
+      summary: Delete order by ID
+      description: Delete order by ID
+      operationId: deleteOrder
+      parameters:
+        - name: orderId
+          in: path
+          description: ID of the order that needs to be deleted
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '400':
+          description: Invalid ID supplied
+        '401':
+          description: User has to be logged in
+        '404':
+          description: Order not found
+      security:
+        - crbooking_auth:
+          - admin
+          - user
+          
+  /booking/ordersby/{username}:
+    get:
+      tags:
+        - booking
+      summary: Gets all orders made by certain user
+      description: Gets all oredrs by certain user
+      operationId: getTransactionSendAdmin
+      parameters:
+        - name: username
+          in: path
+          description: 'The username whose orders should be recieved'   
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items: 
+                  $ref: '#/components/schemas/Order'          
+            application/xml:
+              schema:
+                type: array
+                items: 
+                  $ref: '#/components/schemas/Order'
+        '401':
+          description: User must be logged in admin
+        '404':
+          description: No orders found
+      security: 
+        - crbooking_auth: 
+          - admin
+          - user
+          
+  /user:
+    post:
+      tags:
+        - user
+      summary: Create user
+      description: Create user
+      operationId: createUser
+      requestBody:
+        description: Created user object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUser'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/CreateUser'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreateUser'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Entered invalid data
+          
+  /user/login:
+    get:
+      tags:
+        - user
+      summary: Logs user into the system
+      description: ''
+      operationId: loginUser
+      parameters:
+        - name: username
+          in: query
+          description: The user name for login
+          required: true
+          schema:
+            type: string
+        - name: password
+          in: query
+          description: The password for login in clear text
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid username/password supplied
+          
+  /user/logout:
+    get:
+      tags:
+        - user
+      summary: Logs out current logged in user session
+      description: 'This can only be done if user is logged in'
+      operationId: logoutUser
+      parameters: []
+      responses:
+        '200':
+          description: successful operation
+        '401':
+          description: user has to be logged in
+      security:
+        - crbooking_auth: []
+        
+  /user/self:
+    get:
+      tags:
+        - user
+      summary: Gets full information
+      description: Returns full information only about logged in user.
+      operationId: getUserSelf
+      parameters: []
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: User must be logged in
+      security: 
+        - crbooking_auth: []
+    put:
+      tags:
+        - user
+      summary: Updates user
+      description: Updates information only for logged-in user.
+      operationId: updateUserSelf
+      parameters:
+        - name: username
+          in: query
+          description: The user name for login
+          required: false
+          schema:
+            type: string
+        - name: firstName
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: string
+        - name: lastName
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: string
+        - name: phone
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: string
+        - name: email
+          in: query
+          description: ''
+          required: false
+          schema:
+            type: string
+      requestBody:
+        description: Update your user
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUser'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/UpdateUser'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UpdateUser'
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Entered invalid data
+        '401':
+          description: User must be logged in
+      security:
+        - crbooking_auth: []
+    delete:
+      tags:
+        - user
+      summary: Deletes user
+      description: The user won't be deleted, it's userStatus will be changed to 1.
+      operationId: deleteUserSelf
+      responses:
+        '200':
+          description: successful operation
+        '401':
+          description: User must be logged in
+      security:
+        - crbooking_auth: []
+        
+  /user/{username}:
+    get:
+      tags:
+        - user
+      summary: Get user by user name
+      description: 'This can only be done by logged in admin'
+      operationId: getUserByName
+      parameters:
+        - name: username
+          in: path
+          description: 'The name that needs to be fetched.'
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetUser'          
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/GetUser'
+        '400':
+          description: Invalid username supplied
+        '401':
+          description: User must be logged in admin
+        '404':
+          description: User not found
+      security:
+        - crbooking_auth:
+          - admin
+    delete:
+      tags:
+        - user
+      summary: Delete user
+      description: This can only be done by the logged in admin.
+      operationId: deleteUser
+      parameters:
+        - name: username
+          in: path
+          description: The name that needs to be deleted
+          required: true
+          schema:
+            type: string
+      responses:
+        '400':
+          description: Invalid username supplied
+        '401':
+          description: User must be logged in admin
+        '404':
+          description: User not found
+      security:
+        - crbooking_auth:
+          - admin
+          
+components:
+  schemas:
+    Order:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 10
+        classroomId:
+          type: integer
+          format: int64
+          example: 191
+        userId:
+          type: integer
+          format: int64
+          example: 85495
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        status:
+          type: string
+          description: Order Status
+          enum:
+            - placed
+            - approved
+            - denied
+          example: approved
+      xml:
+        name: order
+        
+    PlaceOrder:
+      required:
+        - classroomId
+        - userId
+        - start
+        - end
+      type: object
+      properties:
+        classroomId:
+          type: integer
+          format: int64
+          example: 191
+        userId:
+          type: integer
+          format: int64
+          example: 85495
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        status:
+          type: string
+          description: Order Status
+          enum:
+            - placed
+            - approved
+            - denied
+          example: placed
+      xml:
+        name: order
+        
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 10
+        username:
+          type: string
+          example: theUser
+        firstName:
+          type: string
+          example: Beb
+        lastName:
+          type: string
+          example: Bems
+        email:
+          type: string
+          example: beb@email.com
+        password:
+          type: string
+          example: '12345'
+        phone:
+          type: string
+          example: '+380098765432'
+        birthDate:
+          type: string
+          format: date
+          example: '2002-11-11'
+        userStatus:
+          type: integer
+          format: int32
+          enum:
+            - 0
+            - 1
+          example: 1
+      xml:
+        name: user
+        
+    CreateUser:
+      required:
+        - username
+        - firstName
+        - LastName
+        - email
+        - password
+      type: object
+      properties:
+        username:
+          type: string
+          example: theUser
+        firstName:
+          type: string
+          example: Beb
+        lastName:
+          type: string
+          example: Bems
+        email:
+          type: string
+          example: beb@email.com
+        password:
+          type: string
+          example: 'hello2world'
+        phone:
+          type: string
+          example: '+380979797979'
+        birthDate: 
+          type: string
+          format: date
+          example: '2022-10-02'
+      xml:
+        name: createuser
+        
+    UpdateUser:
+      type: object
+      properties:
+        firstName:
+          type: string
+          example: John
+        lastName:
+          type: string
+          example: James
+        email:
+          type: string
+          example: john@email.com
+        password:
+          type: string
+          example: 'hello2world'
+        phone:
+          type: string
+          example: '+380979797979'
+      xml:
+        name: usertoupdate
+        
+    GetUser:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 10
+        username:
+          type: string
+          example: theUser
+        firstName:
+          type: string
+          example: John
+        lastName:
+          type: string
+          example: James
+        email:
+          type: string
+          example: john@email.com
+        phone:
+          type: string
+          example: '+380979797979'
+        birthDate: 
+          type: string
+          format: date
+          example: '2022-10-22'
+        userStatus:
+          type: integer
+          format: int32
+          enum:
+            - 0
+            - 1
+          example: 0
+      xml:
+        name: getuser
+        
+    Classroom:
+      required:
+        - name
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 10
+        name:
+          type: string
+          example: 123A
+        status:
+          type: string
+          description: classroom status
+          enum:
+            - available
+            - pending
+            - unavailable
+        capacity:
+          type: integer
+          format: int32
+          example: 20
+      xml:
+        name: classroom
+        
+    CreateClassroom:
+      type: object
+      properties:
+        name:
+          type: string
+          example: 123A
+        status:
+          type: string
+          description: classroom status
+          enum:
+            - available
+            - pending
+            - unavailable
+        capacity:
+          type: integer
+          format: int32
+          example: 20
+      xml:
+        name: classroom
+
+  securitySchemes:
+    crbooking_auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: url
+          scopes:
+            admin: Gives access to admin operations
