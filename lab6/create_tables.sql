@@ -13,7 +13,7 @@ CREATE TABLE user (
 CREATE TABLE classroom (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(128),
-    classroomStatus ENUM('available', 'pending', 'unavailable') DEFAULT 'available',
+    classroomStatus ENUM('available', 'unavailable') DEFAULT 'available',
     capacity INT
 );
 
@@ -23,7 +23,7 @@ CREATE TABLE order_table (
     userId INT,
     start_time DATETIME,
     end_time DATETIME,
-    status ENUM('placed','approved','denied') DEFAULT 'placed',
+    status ENUM('placed','denied') DEFAULT 'placed',
     FOREIGN KEY(classroomId) REFERENCES classroom(id),
     FOREIGN KEY(userId) REFERENCES user(id)
 );

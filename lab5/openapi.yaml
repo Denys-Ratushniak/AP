@@ -72,7 +72,6 @@ paths:
             default: available
             enum:
               - available
-              - pending
               - unavailable
       responses:
         '200':
@@ -191,7 +190,9 @@ paths:
       security:
         - crbooking_auth:
           - admin
-          
+
+
+
   /booking/inventory:
     get:
       tags:
@@ -214,7 +215,8 @@ paths:
       security:
         - crbooking_auth: 
           - admin
-          
+
+
   /booking/order:
     post:
       tags:
@@ -312,8 +314,7 @@ paths:
         '404':
           description: Order not found
       security:
-        - crbooking_auth:
-          - admin
+        - crbooking_auth: []
     delete:
       tags:
         - booking
@@ -340,7 +341,7 @@ paths:
           - admin
           - user
           
-  /booking/ordersby/{username}:
+  /booking/ordersby/{userId}:
     get:
       tags:
         - booking
@@ -348,12 +349,12 @@ paths:
       description: Gets all oredrs by certain user
       operationId: getTransactionSendAdmin
       parameters:
-        - name: username
+        - name: userId
           in: path
-          description: 'The username whose orders should be recieved'   
+          description: 'The userId whose orders should be recieved'
           required: true
           schema:
-            type: string
+            type: integer
       responses:
         '200':
           description: successful operation
@@ -376,7 +377,9 @@ paths:
         - crbooking_auth: 
           - admin
           - user
-          
+
+
+
   /user:
     post:
       tags:
@@ -408,6 +411,8 @@ paths:
                 $ref: '#/components/schemas/User'
         '400':
           description: Entered invalid data
+        '402':
+          description: User with entered username already exists
           
   /user/login:
     get:
@@ -551,7 +556,7 @@ paths:
           description: User must be logged in
       security:
         - crbooking_auth: []
-        
+
   /user/{username}:
     get:
       tags:
@@ -608,7 +613,10 @@ paths:
       security:
         - crbooking_auth:
           - admin
-          
+
+
+
+
 components:
   schemas:
     Order:
@@ -637,12 +645,11 @@ components:
           description: Order Status
           enum:
             - placed
-            - approved
             - denied
           example: approved
       xml:
         name: order
-        
+
     PlaceOrder:
       required:
         - classroomId
@@ -665,17 +672,8 @@ components:
         end:
           type: string
           format: date-time
-        status:
-          type: string
-          description: Order Status
-          enum:
-            - placed
-            - approved
-            - denied
-          example: placed
       xml:
         name: order
-        
     User:
       type: object
       properties:
@@ -823,7 +821,6 @@ components:
           description: classroom status
           enum:
             - available
-            - pending
             - unavailable
         capacity:
           type: integer
@@ -843,7 +840,6 @@ components:
           description: classroom status
           enum:
             - available
-            - pending
             - unavailable
         capacity:
           type: integer

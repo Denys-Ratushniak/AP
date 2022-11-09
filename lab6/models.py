@@ -1,12 +1,11 @@
-import MySQLdb
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy import Column, Integer, String, Date, ForeignKey, Enum, DateTime
 
-DB_URL = "mysql://root:$ygnivkA12@localhost:3306/ap"
-
+DB_URL = "mysql://root:E100_amx1390_maus@localhost:3306/ap"
+# DB_URL = "mysql://root:$ygnivkA12@localhost:3306/ap"
 engine = create_engine(DB_URL)
 SessionFactory = sessionmaker(bind=engine)
 Session = scoped_session(SessionFactory)
@@ -46,4 +45,4 @@ class Order(BaseModel):
 
 	start_time = Column(DateTime)
 	end_time = Column(DateTime)
-	status = Column(Enum('placed', 'approved', 'denied'), default='placed')
+	orderStatus = Column(Enum('placed', 'denied'), default='placed')

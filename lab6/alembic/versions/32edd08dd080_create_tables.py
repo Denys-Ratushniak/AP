@@ -32,7 +32,7 @@ def upgrade() -> None:
 
     op.create_table(
         'classroom',
-        sa.Column('id',sa.Integer,primary_key=True),
+        sa.Column('id',sa.Integer, primary_key=True),
         sa.Column('name', sa.VARCHAR(128)),
         sa.Column('classroomStatus', sa.Enum('available', 'pending', 'unavailable'), default='available'),
         sa.Column('capacity', sa.Integer)
@@ -45,7 +45,7 @@ def upgrade() -> None:
         sa.Column('userId', sa.Integer, sa.ForeignKey("user.id")),
         sa.Column('start_time', sa.DateTime),
         sa.Column('end_time', sa.DateTime),
-        sa.Column('status', sa.Enum('placed', 'approved', 'denied'), default='placed')
+        sa.Column('orderStatus', sa.Enum('placed', 'denied'), default='placed')
     )
 
 
