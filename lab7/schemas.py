@@ -53,7 +53,6 @@ class ClassroomData(Schema):
 
 class CreateClassroom(Schema):
     name = fields.String(required=True, validate=validate.Regexp('^[a-zA-Z\d\.-_]{1,120}$'))
-    classroomStatus = fields.String(validate=validate.OneOf('available', 'unavailable'))
     capacity = fields.Integer(validate=lambda x: x > 0)
 
 
@@ -84,8 +83,7 @@ class PlaceOrder(Schema):
     userId = fields.Integer(required=True)
     start_time = fields.DateTime(required=True)
     end_time = fields.DateTime(required=True)
-    orderStatus = fields.String()
 
 
 class UpdateOrder(Schema):
-    orderStatus = fields.String(validate=validate.OneOf('placed', 'denied'))
+    orderStatus = fields.String(validate=validate.OneOf(choices=['placed', 'denied']))
