@@ -1,3 +1,5 @@
 /.idea
 __pycache__
 /poetry-lab4
+/.python-version
+/venv

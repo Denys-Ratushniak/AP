@@ -121,6 +121,8 @@ paths:
                 $ref: '#/components/schemas/Classroom'
         '400':
           description: Invalid ID supplied
+        '401':
+          description: Admin has to be logged in
         '404':
           description: Classroom not found
       security:
@@ -283,6 +285,7 @@ paths:
       security:
         - crbooking_auth:
           - admin
+          - user
     put:
       tags:
         - booking
@@ -376,7 +379,6 @@ paths:
       security: 
         - crbooking_auth: 
           - admin
-          - user
 
 
 

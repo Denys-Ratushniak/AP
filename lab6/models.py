@@ -4,8 +4,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy import Column, Integer, String, Date, ForeignKey, Enum, DateTime
 
-DB_URL = "mysql://root:E100_amx1390_maus@localhost:3306/ap"
+# DB_URL = "mysql://root:E100_amx1390_maus@localhost:3306/ap"
 # DB_URL = "mysql://root:$ygnivkA12@localhost:3306/ap"
+DB_URL = "mysql://root:password@localhost:3306/ap"
 engine = create_engine(DB_URL)
 SessionFactory = sessionmaker(bind=engine)
 Session = scoped_session(SessionFactory)
@@ -24,6 +25,7 @@ class User(BaseModel):
 	phone = Column(String)
 	birthDate = Column(Date)
 	userStatus = Column(Enum('0', '1'), default='1')
+	isAdmin = Column(Enum('0', '1'), default='0')
 
 
 class Classroom(BaseModel):

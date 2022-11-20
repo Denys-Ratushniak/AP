@@ -1,11 +1,12 @@
 import datetime
 from datetime import datetime
-import sys
+from flask_httpauth import HTTPBasicAuth
+from flask_bcrypt import check_password_hash
+from flask_login import logout_user
 import json
 import marshmallow
 import sqlalchemy
 
-sys.path.append('B:/Projects/AP')
 
 from flask import Blueprint, jsonify, request, make_response
 from lab7 import db_utils
@@ -23,10 +24,32 @@ from lab7.schemas import (
     UpdateOrder,
 )
 
+
+auth = HTTPBasicAuth()
 api_blueprint = Blueprint('api', __name__)
 StudentID = 7
 
 errors = Blueprint('errors', __name__)
+
+
+def verify_password(username, password):
+    user = db_utils.get_entry_by_name(User, username)
+    if check_password_hash(user.password, password):
+        return username
+    return None
+
+
+def admin_required(func):
+    def wrapper(*args, **kwargs):
+        username = auth.current_user()
+        user = db_utils.get_entry_by_name(User, username)
+        if user.isAdmin == '1':
+            return func(*args, **kwargs)
+        else:
+            return StatusResponse(jsonify({"error": f"User must be an admin to use {func.__name__}."}), 401)
+
+    wrapper.__name__ = func.__name__
+    return wrapper
 
 
 @errors.app_errorhandler(sqlalchemy.exc.NoResultFound)
@@ -118,23 +141,48 @@ def hello_world():
 @api_blueprint.route('/user', methods=["POST"])
 def create_user():
     user_data = CreateUser().load(request.json)
-    print(user_data)
     if db_utils.is_name_taken(User, user_data["username"]):
         return StatusResponse(jsonify({"error": "User with entered username already exists"}), 402)
+
+    user = None
+    if request.authorization is not None:
+        username = request.authorization.username
+        password = request.authorization.password
+        user = verify_password(username, password)
+    if (request.authorization is None or user is None
+            or db_utils.get_entry_by_name(User, username).isAdmin == '0') and \
+            'isAdmin' in user_data.keys() and user_data['isAdmin'] == '1':
+        return StatusResponse(jsonify({"error": "Only admins can create other admins"}), 405)
 
     user = db_utils.create_entry(User, **user_data)
     return StatusResponse(jsonify(UserData().dump(user)), 200)
 
 
+@api_blueprint.route("/login")
+@auth.verify_password
+def login(username, password):
+    user = db_utils.get_entry_by_name(User, username)
+    print(user)
+    if check_password_hash(user.password, password):
+        return True
+
+    return False
+
+
 @api_blueprint.route('/user/<int:user_id>', methods=["GET"])
+@auth.login_required
+@admin_required
 def get_user_by_id(user_id):
     user = db_utils.get_entry_by_id(User, user_id)
     return StatusResponse(jsonify(GetUser().dump(user)), 200)
 
 
 @api_blueprint.route('/user/self', methods=["GET", "DELETE", "PUT"])
+@auth.login_required
 def user_self():
-    selfid = 1  # for future: take this id from logged-in user
+    username = auth.current_user()
+    user = db_utils.get_entry_by_name(User, username)
+    selfid = user.id
     if request.method == 'GET':
         user = db_utils.get_entry_by_id(User, selfid)
         return StatusResponse(jsonify(UserData().dump(user)), 200)
@@ -156,6 +204,8 @@ def user_self():
 
 
 @api_blueprint.route('/user/<string:user_name>', methods=["PUT", "DELETE", "GET"])
+@auth.login_required
+@admin_required
 def user_admin(user_name):
     if request.method == 'PUT':  # must not be in the future, now is existing for test
         user_data = UpdateUser().load(request.json)
@@ -180,6 +230,8 @@ def user_admin(user_name):
 
 
 @api_blueprint.route('/classroom', methods=["POST"])
+@auth.login_required
+@admin_required
 def create_classroom():
     classroom_data = CreateClassroom().load(request.json)
 
@@ -191,6 +243,7 @@ def create_classroom():
 
 
 @api_blueprint.route('/classroom/findByStatus', methods=["GET"])
+@auth.login_required
 def find_classroom_by_status():
     if not validate_statuses(request.json["status"]):
         return StatusResponse(jsonify({"error": "Invalid status value(s). "
@@ -206,6 +259,8 @@ def find_classroom_by_status():
 
 
 @api_blueprint.route('/classroom/<int:classroom_id>', methods=["GET", "PUT", "DELETE"])
+@auth.login_required
+@admin_required
 def classroom(classroom_id):
     db_utils.reload_classroom_statuses()
 
@@ -227,9 +282,12 @@ def classroom(classroom_id):
 
 
 @api_blueprint.route('/booking/order', methods=["POST"])
+@auth.login_required
 def place_order():
+    username = auth.current_user()
     db_utils.reload_classroom_statuses()
-    selfid = 1  # for future: take this id from logged-in user
+    user = db_utils.get_entry_by_name(User, username)
+    selfid = user.id
 
     param = request.json
     param.update({"userId": selfid})
@@ -265,10 +323,18 @@ def place_order():
 
 
 @api_blueprint.route('/booking/order/<int:order_id>', methods=["GET", "PUT", "DELETE"])
+@auth.login_required
 def order(order_id):
     db_utils.reload_classroom_statuses()
 
     order_ = db_utils.get_entry_by_id(Order, order_id)
+
+    username = auth.current_user()
+    user = db_utils.get_entry_by_name(User, username)
+    selfid = user.id
+
+    if selfid != order_.userId:
+        return StatusResponse(jsonify({"error": "this order is not yours"}), 402)
 
     if request.method == "GET":
         return StatusResponse(jsonify(OrderData().dump(order_)), 200)
@@ -287,6 +353,8 @@ def order(order_id):
 
 
 @api_blueprint.route('/booking/ordersby/<int:userid>', methods=["GET"])
+@auth.login_required
+@admin_required
 def get_all_orders(userid):
     if not db_utils.is_id_taken(User, userid):
         return StatusResponse(jsonify({"error": "user with entered id does not found"}), 404)
@@ -298,6 +366,8 @@ def get_all_orders(userid):
 
 
 @api_blueprint.route('/booking/inventory', methods=["GET"])
+@auth.login_required
+@admin_required
 def get_orders_by_status():
     if not validate_statuses_orders(request.json["status"]):
         return StatusResponse(jsonify({"error": "Invalid status value(s). "
