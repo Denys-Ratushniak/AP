@@ -11,6 +11,7 @@ class CreateUser(Schema):
     password = fields.Function(required=True, deserialize=lambda obj: generate_password_hash(obj), load_only=True)
     phone = fields.Function(validate=validate.Regexp('^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[\s0-9]{4,20}$'))
     birthDate = fields.Date(validate=lambda x: x < date.today())
+    isAdmin = fields.String(validate=validate.OneOf(choices=['0', '1']))
 
 
 class UserData(Schema):
@@ -23,6 +24,7 @@ class UserData(Schema):
     phone = fields.String()
     birthDate = fields.Date()
     userStatus = fields.Integer()
+    isAdmin = fields.String()
 
 
 class UpdateUser(Schema):
@@ -42,6 +44,7 @@ class GetUser(Schema):
     phone = fields.String()
     birthDate = fields.Date()
     userStatus = fields.Integer()
+    isAdmin = fields.String()
 
 
 class ClassroomData(Schema):

@@ -12,7 +12,7 @@ from blueprint import errors
 # sched.add_job(db_utils.reload_classroom_statuses, 'interval', seconds=30)
 # sched.start()
 
-app = Flask(__name__, instance_path="/B:/Projects/AP/flask_project/instance")
+app = Flask(__name__)
 
 with make_server('', 5000, app) as server:
     app.register_blueprint(api_blueprint, url_prefix="")
