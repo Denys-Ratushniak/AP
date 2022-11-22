@@ -7,6 +7,7 @@ from sqlalchemy import Column, Integer, String, Date, ForeignKey, Enum, DateTime
 DB_URL = "mysql://root:E100_amx1390_maus@localhost:3306/ap"
 # DB_URL = "mysql://root:$ygnivkA12@localhost:3306/ap"
 # DB_URL = "mysql://root:password@localhost:3306/ap"
+
 engine = create_engine(DB_URL)
 SessionFactory = sessionmaker(bind=engine)
 Session = scoped_session(SessionFactory)
@@ -17,12 +18,12 @@ BaseModel = declarative_base()
 class User(BaseModel):
 	__tablename__ = "user"
 	id = Column(Integer, primary_key=True)
-	username = Column(String)
-	firstName = Column(String)
-	lastName = Column(String)
-	email = Column(String)
-	password = Column(String)
-	phone = Column(String)
+	username = Column(String(128))
+	firstName = Column(String(32))
+	lastName = Column(String(32))
+	email = Column(String(128))
+	password = Column(String(128))
+	phone = Column(String(32))
 	birthDate = Column(Date)
 	userStatus = Column(Enum('0', '1'), default='1')
 	isAdmin = Column(Enum('0', '1'), default='0')
@@ -31,7 +32,7 @@ class User(BaseModel):
 class Classroom(BaseModel):
 	__tablename__ = "classroom"
 	id = Column(Integer, primary_key=True)
-	name = Column(String)
+	name = Column(String(128))
 	classroomStatus = Column(Enum('available', 'pending', 'unavailable'), default='available')
 	capacity = Column(Integer)
 
