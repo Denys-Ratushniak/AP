@@ -365,6 +365,24 @@ def get_all_orders(userid):
     return StatusResponse(jsonify(ans), 200)
 
 
+@api_blueprint.route('/booking/ordersby/self', methods=["GET"])
+@auth.login_required
+def get_all_orders_self():
+
+    username = auth.current_user()
+    user = db_utils.get_entry_by_name(User, username)
+    selfid = user.id
+
+    if not db_utils.is_id_taken(User, selfid):
+        return StatusResponse(jsonify({"error": "user with entered id does not found"}), 404)
+
+
+    orders = db_utils.find_orders_by_userid(selfid)
+    ans = [OrderData().dump(x) for x in orders]
+
+    return StatusResponse(jsonify(ans), 200)
+
+
 @api_blueprint.route('/booking/inventory', methods=["GET"])
 @auth.login_required
 @admin_required
