@@ -1,12 +1,8 @@
-import datetime
-
 from sqlalchemy import select
-
-from lab6.models import Session, User, Classroom, Order
+from classroom_booking.models import Session, User, Classroom, Order
 from sqlalchemy.sql import exists
 from datetime import datetime
-
-from lab7.schemas import ClassroomData
+from classroom_booking.schemas import ClassroomData
 
 
 def create_entry(model_class, *, commit=True, **kwargs):
@@ -155,10 +151,9 @@ def is_classroom_free_in_range(classroomid, start_time, end_time):
 
     if session.query(exists().where(Order.classroomId == classroomid,
                                     Order.orderStatus == 'placed',
-                                    start_time <= Order.end_time,
-                                    Order.end_time < end_time
+                                    start_time < Order.end_time,
+                                    Order.end_time <= end_time
                                     )).scalar():
         return False
 
     return True
-    # return session.query(exists().where(model_class.id == uid)).scalar()
