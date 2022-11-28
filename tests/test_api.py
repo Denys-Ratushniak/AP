@@ -6,9 +6,9 @@ from flask import url_for, Flask
 from flask_bcrypt import generate_password_hash
 from flask_testing import TestCase
 
-from total import db_utils
-from total.models import User, Session, Order, Classroom, BaseModel, engine
-from total.app import app
+from classroom_booking import db_utils
+from classroom_booking.models import User, Session, Order, Classroom, BaseModel, engine
+from classroom_booking.app import app
 
 
 class BaseTestCase(TestCase):
@@ -44,7 +44,6 @@ class BaseTestCase(TestCase):
             "password": "user2",
             "phone": "+380961010101",
             "birthDate": "2000-01-01",
-            "isAdmin": "0"
         }
 
         self.update_user_valid = {
@@ -116,7 +115,7 @@ class BaseTestCase(TestCase):
 
         self.order2_data_with_userid = {
             "classroomId": 2,
-            "userId": 2,
+            "userId": 1,
             "start_time": "2022-12-22 12:00:00",
             "end_time": "2022-12-22 13:00:00"
         }
@@ -156,17 +155,15 @@ class TestUserSelf(BaseTestCase):
             url_for("api.user_self"),
             headers=self.get_auth_basic(self.user1_credentials)
         )
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(200, resp.status_code)
         self.assertEqual(resp.json, {
             "username": self.user1_data["username"],
             "firstName": self.user1_data["firstName"],
             "lastName": self.user1_data["lastName"],
             "email": self.user1_data["email"],
-            "password": self.user1_data_hashed["password"],
             "phone": self.user1_data["phone"],
             "birthDate": self.user1_data["birthDate"],
             "isAdmin": self.user1_data["isAdmin"],
-            "userStatus": 1,
             "code": 200,
         })
 
@@ -178,7 +175,7 @@ class TestUserSelf(BaseTestCase):
             json=self.update_user_valid
         )
 
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(200, resp.status_code)
         self.assertEqual(resp.json, {
             "username": self.user1_data["username"],
             "firstName": self.update_user_valid["firstName"],
@@ -186,7 +183,6 @@ class TestUserSelf(BaseTestCase):
             "email": self.update_user_valid["email"],
             "phone": self.update_user_valid["phone"],
             "birthDate": self.user1_data["birthDate"],
-            "isAdmin": self.user1_data["isAdmin"],
             "userStatus": 1,
             "code": 200,
         })
@@ -198,17 +194,15 @@ class TestUserSelf(BaseTestCase):
             headers=self.get_auth_basic(self.user1_credentials),
         )
 
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(200, resp.status_code)
         self.assertEqual(resp.json, {
             "username": "0",
             "firstName": self.user1_data["firstName"],
             "lastName": self.user1_data["lastName"],
             "email": self.user1_data["email"],
             "phone": self.user1_data["phone"],
-            "password": self.user1_data_hashed["password"],
             "birthDate": self.user1_data["birthDate"],
             "isAdmin": self.user1_data["isAdmin"],
-            "userStatus": 0,
             "code": 200,
         })
 
@@ -219,7 +213,7 @@ class TestUserSelf(BaseTestCase):
             headers=self.get_auth_basic(self.user1_credentials),
             json=self.update_user_invalid_firstname
         )
-        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(400, resp.status_code)
         self.assertEqual(resp.json, {
             "code": 400,
             "error": "{'firstName': ['Shorter than minimum length 2.']}"
@@ -227,8 +221,8 @@ class TestUserSelf(BaseTestCase):
 
     def test_unauth_not_existing_username(self):
         resp = self.client.get(url_for("api.user_self"))
-        self.assertEqual(resp.status_code, 404)
-        self.assertEqual(resp.json, {'code': 404, 'error': 'Not found'})
+        self.assertEqual(401, resp.status_code)
+        self.assertEqual(str(resp), '<WrapperTestResponse streamed [401 UNAUTHORIZED]>')
 
     def test_unauth_wrong_password(self):
         db_utils.create_entry(User, **self.user1_data_hashed)
@@ -237,7 +231,7 @@ class TestUserSelf(BaseTestCase):
             headers=self.get_auth_basic({"username": self.user1_credentials["username"],
                                          "password": "invalid_password"})
         )
-        self.assertEqual(resp.status_code, 401)
+        self.assertEqual(401, resp.status_code)
         self.assertEqual(str(resp), "<WrapperTestResponse streamed [401 UNAUTHORIZED]>")
 
 
@@ -247,19 +241,17 @@ class TestCreateUser(BaseTestCase):
             url_for("api.create_user"),
             json=self.user2_data
         )
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(200, resp.status_code)
 
         self.assertEqual(resp.json, {
             "username": self.user2_data["username"],
             "firstName": self.user2_data["firstName"],
             "lastName": self.user2_data["lastName"],
             "email": self.user2_data["email"],
-            "password": ANY,
             "phone": self.user2_data["phone"],
             "birthDate": self.user2_data["birthDate"],
-            "isAdmin": self.user2_data["isAdmin"],
-            "userStatus": 1,
             "code": 200,
+            "isAdmin": ANY
         })
         self.assertTrue(
             Session.query(User).filter_by(username=self.user2_data["username"]).one()
@@ -273,7 +265,7 @@ class TestGetUserById(BaseTestCase):
             url_for("api.get_user_by_id", user_id=1),
             headers=self.get_auth_basic(self.user1_credentials)
         )
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(200, resp.status_code)
 
         self.assertEqual(resp.json, {
             "username": self.user1_data["username"],
@@ -282,10 +274,13 @@ class TestGetUserById(BaseTestCase):
             "email": self.user1_data["email"],
             "phone": self.user1_data["phone"],
             "birthDate": self.user1_data["birthDate"],
-            "isAdmin": self.user1_data["isAdmin"],
             "userStatus": ANY,
             "code": 200,
         })
+
+        self.assertTrue(
+            Session.query(User).filter_by(username=self.user1_data["username"]).one()
+        )
 
     def test_get_user_by_id_not_admin(self):
         db_utils.create_entry(User, **self.user1_data_hashed)
@@ -294,12 +289,13 @@ class TestGetUserById(BaseTestCase):
             url_for("api.get_user_by_id", user_id=1),
             headers=self.get_auth_basic(self.user2_credentials)
         )
-        self.assertEqual(resp.status_code, 401)
+        self.assertEqual(401, resp.status_code)
 
         self.assertEqual(resp.json, {
             "error": ANY,
             "code": 401
         })
+
 
 class TestActionUserByUsername(BaseTestCase):
     def test_get_user_by_username(self):
@@ -308,7 +304,7 @@ class TestActionUserByUsername(BaseTestCase):
             url_for("api.user_admin", user_name='user1'),
             headers=self.get_auth_basic(self.user1_credentials)
         )
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(200, resp.status_code)
 
         self.assertEqual(resp.json, {
             "username": self.user1_data["username"],
@@ -317,7 +313,6 @@ class TestActionUserByUsername(BaseTestCase):
             "email": self.user1_data["email"],
             "phone": self.user1_data["phone"],
             "birthDate": self.user1_data["birthDate"],
-            "isAdmin": self.user1_data["isAdmin"],
             "userStatus": ANY,
             "code": 200,
         })
@@ -328,7 +323,7 @@ class TestActionUserByUsername(BaseTestCase):
             url_for("api.user_admin", user_name='user'),
             headers=self.get_auth_basic(self.user1_credentials)
         )
-        self.assertEqual(resp.status_code, 404)
+        self.assertEqual(404, resp.status_code)
         self.assertEqual(resp.json, {
             "code": 404,
             "error": "Not found"
@@ -341,7 +336,7 @@ class TestActionUserByUsername(BaseTestCase):
             headers=self.get_auth_basic(self.user1_credentials),
         )
 
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(200, resp.status_code)
         self.assertEqual(resp.json, {
             "username": "0",
             "firstName": self.user1_data["firstName"],
@@ -349,7 +344,6 @@ class TestActionUserByUsername(BaseTestCase):
             "email": self.user1_data["email"],
             "phone": self.user1_data["phone"],
             "birthDate": self.user1_data["birthDate"],
-            "isAdmin": self.user1_data["isAdmin"],
             "userStatus": 0,
             "code": 200,
         })
@@ -360,7 +354,7 @@ class TestActionUserByUsername(BaseTestCase):
             url_for("api.user_admin", user_name='user'),
             headers=self.get_auth_basic(self.user1_credentials)
         )
-        self.assertEqual(resp.status_code, 404)
+        self.assertEqual(404, resp.status_code)
         self.assertEqual(resp.json, {
             "code": 404,
             "error": "Not found"
@@ -375,7 +369,7 @@ class TestCreateClassroom(BaseTestCase):
             json=self.classroom1_data,
             headers=self.get_auth_basic(self.user1_credentials)
         )
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(200, resp.status_code)
         self.assertEqual(resp.json, {
             "name": self.classroom1_data["name"],
             "capacity": self.classroom1_data["capacity"],
@@ -394,9 +388,9 @@ class TestCreateClassroom(BaseTestCase):
             json=self.classroom1_data,
             headers=self.get_auth_basic(self.user1_credentials)
         )
-        self.assertEqual(resp.status_code, 402)
+        self.assertEqual(403, resp.status_code)
         self.assertEqual(resp.json, {
-            "code": 402,
+            "code": 403,
             "error": "Classroom with entered name already exists"
         })
 
@@ -412,7 +406,7 @@ class TestGetClassroomsByStatus(BaseTestCase):
             json=self.classroom_2statuses,
             headers=self.get_auth_basic(self.user1_credentials)
         )
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(200, resp.status_code)
         self.assertEqual(resp.json, [
             {
                 "capacity": self.classroom1_data["capacity"],
@@ -439,7 +433,7 @@ class TestGetClassroomsByStatus(BaseTestCase):
             json=self.classroom_invalid_statuses,
             headers=self.get_auth_basic(self.user1_credentials)
         )
-        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(400, resp.status_code)
         self.assertEqual(resp.json, {"error": "Invalid status value(s). "
                                               "Should be list with maximum size = 2, "
                                               "elements should be strings \'available' or 'unavailable' ",
@@ -455,7 +449,7 @@ class TestActionClassroom(BaseTestCase):
             url_for("api.classroom", classroom_id=1),
             headers=self.get_auth_basic(self.user1_credentials)
         )
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(200, resp.status_code)
         self.assertEqual(resp.json, {
             "name": self.classroom1_data["name"],
             "capacity": self.classroom1_data["capacity"],
@@ -470,7 +464,7 @@ class TestActionClassroom(BaseTestCase):
             url_for("api.classroom", classroom_id=1),
             headers=self.get_auth_basic(self.user1_credentials)
         )
-        self.assertEqual(resp.status_code, 404)
+        self.assertEqual(404, resp.status_code)
         self.assertEqual(resp.json, {
             "code": 404,
             "error": "Not found"
@@ -485,7 +479,7 @@ class TestActionClassroom(BaseTestCase):
             json=self.classroom1_update_data,
             headers=self.get_auth_basic(self.user1_credentials)
         )
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(200, resp.status_code)
         self.assertEqual(resp.json, {
             "name": self.classroom1_update_data["name"],
             "capacity": self.classroom1_data["capacity"],
@@ -501,10 +495,15 @@ class TestActionClassroom(BaseTestCase):
             url_for("api.classroom", classroom_id=1),
             headers=self.get_auth_basic(self.user1_credentials)
         )
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(200, resp.status_code)
+        resp = self.client.delete(
+            url_for("api.classroom", classroom_id=1),
+            headers=self.get_auth_basic(self.user1_credentials)
+        )
+        self.assertEqual(404, resp.status_code)
         self.assertEqual(resp.json, {
-            "code": 200,
-            "message": "deleted"
+            "code": 404,
+            "error": "Not found"
         })
 
 
@@ -517,7 +516,7 @@ class TestCreateOrder(BaseTestCase):
             json=self.order1_data,
             headers=self.get_auth_basic(self.user1_credentials)
         )
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(200, resp.status_code)
         start_time = self.order1_data["start_time"].split(' ')[0] + "T" + self.order1_data["start_time"].split(' ')[1]
         end_time = self.order1_data["end_time"].split(' ')[0] + "T" + self.order1_data["end_time"].split(' ')[1]
         self.assertEqual(resp.json, {
@@ -541,7 +540,7 @@ class TestCreateOrder(BaseTestCase):
             json=self.order1_data,
             headers=self.get_auth_basic(self.user1_credentials)
         )
-        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(400, resp.status_code)
         self.assertEqual(resp.json, {"error": "This classroom will be unavailable in entered period of time",
                                      "code": 400})
 
@@ -561,7 +560,7 @@ class TestGetOrdersByStatus(BaseTestCase):
             headers=self.get_auth_basic(self.user1_credentials)
         )
 
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(200, resp.status_code)
         start_time1 = self.order1_data["start_time"].split(' ')[0] + "T" + self.order1_data["start_time"].split(' ')[1]
         start_time2 = self.order2_data["start_time"].split(' ')[0] + "T" + self.order2_data["start_time"].split(' ')[1]
 
@@ -595,7 +594,7 @@ class TestActionOrder(BaseTestCase):
             url_for("api.order", order_id=1),
             headers=self.get_auth_basic(self.user1_credentials)
         )
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(200, resp.status_code)
         start_time = self.order1_data["start_time"].split(' ')[0] + "T" + self.order1_data["start_time"].split(' ')[1]
         end_time = self.order1_data["end_time"].split(' ')[0] + "T" + self.order1_data["end_time"].split(' ')[1]
         self.assertEqual(resp.json, {
@@ -603,29 +602,6 @@ class TestActionOrder(BaseTestCase):
             "start_time": start_time,
             "end_time": end_time,
             "orderStatus": "placed",
-            "code": 200,
-            "userId": 1
-        })
-
-    def test_update_order_by_id(self):
-        db_utils.create_entry(User, **self.user1_data_hashed)
-        db_utils.create_entry(Classroom, **self.classroom1_data)
-        db_utils.create_order(**self.order1_data_with_userid)
-
-        resp = self.client.put(
-            url_for("api.order", order_id=1),
-            json={"orderStatus": "denied"},
-            headers=self.get_auth_basic(self.user1_credentials)
-        )
-
-        self.assertEqual(resp.status_code, 200)
-        start_time = self.order1_data["start_time"].split(' ')[0] + "T" + self.order1_data["start_time"].split(' ')[1]
-        end_time = self.order1_data["end_time"].split(' ')[0] + "T" + self.order1_data["end_time"].split(' ')[1]
-        self.assertEqual(resp.json, {
-            "classroomId": self.order1_data["classroomId"],
-            "start_time": start_time,
-            "end_time": end_time,
-            "orderStatus": "denied",
             "code": 200,
             "userId": 1
         })
@@ -640,12 +616,50 @@ class TestActionOrder(BaseTestCase):
             headers=self.get_auth_basic(self.user1_credentials)
         )
 
-        self.assertEqual(resp.status_code, 200)
-
+        self.assertEqual(200, resp.status_code)
+        start_time = self.order1_data["start_time"].split(' ')[0] + "T" + self.order1_data["start_time"].split(' ')[1]
+        end_time = self.order1_data["end_time"].split(' ')[0] + "T" + self.order1_data["end_time"].split(' ')[1]
         self.assertEqual(resp.json, {
+            "classroomId": self.order1_data["classroomId"],
+            "start_time": start_time,
+            "end_time": end_time,
+            "orderStatus": "denied",
             "code": 200,
-            "message": "deleted"
+            "userId": 1
         })
+
+
+class TestGetOrders(BaseTestCase):
+    def test_get_self_orders(self):
+        db_utils.create_entry(User, **self.user1_data_hashed)
+        db_utils.create_entry(Classroom, **self.classroom1_data)
+        db_utils.create_entry(Classroom, **self.classroom2_data)
+        db_utils.create_order(**self.order1_data_with_userid)
+        db_utils.create_order(**self.order2_data_with_userid)
+        resp = self.client.get(
+            url_for("api.get_self_orders"),
+            headers=self.get_auth_basic(self.user1_credentials)
+        )
+
+        self.assertEqual(200, resp.status_code)
+        start_time1 = self.order1_data["start_time"].split(' ')[0] + "T" + self.order1_data["start_time"].split(' ')[1]
+        start_time2 = self.order2_data["start_time"].split(' ')[0] + "T" + self.order2_data["start_time"].split(' ')[1]
+        end_time1 = self.order1_data["end_time"].split(' ')[0] + "T" + self.order1_data["end_time"].split(' ')[1]
+        end_time2 = self.order2_data["end_time"].split(' ')[0] + "T" + self.order2_data["end_time"].split(' ')[1]
+        self.assertEqual(resp.json, [{
+            "classroomId": self.order1_data["classroomId"],
+            "start_time": start_time1,
+            "end_time": end_time1,
+            "orderStatus": ANY,
+            "userId": 1
+        }, {
+            "classroomId": self.order2_data["classroomId"],
+            "start_time": start_time2,
+            "end_time": end_time2,
+            "orderStatus": ANY,
+            "userId": 1
+        },
+            {"code": 200}])
 
 
 if __name__ == "__main__":
