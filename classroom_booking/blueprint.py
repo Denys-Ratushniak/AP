@@ -117,7 +117,7 @@ def admin_required(func):
 @api_blueprint.route("/login")
 @auth.verify_password
 def login(username, password):
-    if not db_utils.is_name_taken(User, username):
+    if username == '0' or not db_utils.is_name_taken(User, username):
         return False
 
     user = db_utils.get_entry_by_name(User, username)
@@ -282,7 +282,7 @@ def place_order():
     return status_response(jsonify(OrderData().dump(order_)), 200)
 
 
-@api_blueprint.route('/booking/order/<int:order_id>', methods=["GET", "DELETE"])
+@api_blueprint.route('/booking/order/<int:order_id>', methods=["GET", "PUT"])
 @auth.login_required
 def order(order_id):
     db_utils.reload_classroom_statuses()
@@ -299,7 +299,7 @@ def order(order_id):
     if request.method == "GET":
         return status_response(jsonify(OrderData().dump(order_)), 200)
 
-    if request.method == "DELETE":
+    if request.method == "PUT":
         order_data = {"orderStatus": "denied"}
         db_utils.update_entry(order_, **order_data)
 

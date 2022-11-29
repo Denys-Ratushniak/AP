@@ -14,7 +14,7 @@ class CreateUser(Schema):
 
 
 class UserData(Schema):
-    uid = fields.Integer()
+    id = fields.Integer()
     username = fields.String()
     firstName = fields.String()
     lastName = fields.String()
@@ -33,7 +33,7 @@ class UpdateUser(Schema):
 
 
 class GetUser(Schema):
-    uid = fields.Integer()
+    id = fields.Integer()
     username = fields.String()
     firstName = fields.String()
     lastName = fields.String()
@@ -44,7 +44,7 @@ class GetUser(Schema):
 
 
 class ClassroomData(Schema):
-    uid = fields.Integer()
+    id = fields.Integer()
     name = fields.String()
     classroomStatus = fields.String()
     capacity = fields.Integer()
@@ -61,7 +61,7 @@ class UpdateClassroom(Schema):
 
 
 class OrderData(Schema):
-    uid = fields.Integer()
+    id = fields.Integer()
     classroomId = fields.Integer()
     userId = fields.Integer()
     start_time = fields.DateTime()

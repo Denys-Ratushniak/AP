@@ -44,7 +44,8 @@ paths:
           description: User with entered username already exists
 
   /user/login:
-    ANY:
+    #ANY:
+    put: # to do not have errors in swagger editor but here may be any type
       tags:
         - user
       summary: Gives user access to others methods
@@ -64,9 +65,11 @@ paths:
           schema:
             type: string
       responses:
-        True:
+        # True:
+        '200': # to do not have errors in swagger editor
           description: successful operation
-        False:
+        # False:
+        '400': # to do not have errors in swagger editor
           description: Invalid or not existing username/password supplied
 
   /user/self:
@@ -85,7 +88,7 @@ paths:
                 $ref: '#/components/schemas/UserData'
         '401':
           description: User must be logged in
-      security: 
+      security:
         - crbooking_auth: []
     put:
       tags:
@@ -133,7 +136,7 @@ paths:
         - user
       summary: Get user by user id
       description: This can only be done by logged in admin
-      operationId: getUserByName
+      operationId: getUserById
       parameters:
         - name: user_id
           in: path
@@ -253,12 +256,12 @@ paths:
       parameters:
         - name: status
           in: query
-          type: json
           description: Status values that need to be considered for filter
           required: true
           schema:
             type: array
-            enum:
+            items:
+              enum:
               - available
               - unavailable
       responses:
@@ -311,6 +314,14 @@ paths:
       summary: Updates a classroom
       description: Updates a classroom
       operationId: updateClassroom
+      parameters:
+        - name: classroomId
+          in: path
+          description: ID of classroom to update
+          required: true
+          schema:
+            type: integer
+            format: int32
       requestBody:
         description: Classroom data to be updated
         required: true
@@ -376,6 +387,8 @@ paths:
                 additionalProperties:
                   type: integer
                   format: int32
+        '400':
+          description: Invalid input data
         '401':
           description: admin has to be logged in
       security:
@@ -405,6 +418,8 @@ paths:
           description: Invalid input
         '401':
           description: User has to be logged in
+        '404':
+          description: Not found
       security:
         - crbooking_auth: []
 
@@ -438,12 +453,20 @@ paths:
           description: Not found
       security:
         - crbooking_auth: []
-    delete:
+    put:
       tags:
         - booking
       summary: Deny order
       description: Deny user`s order, order wont be deleted, status will be changed to 'denied'
       operationId: deleteOrderById
+      parameters:
+        - name: order_id
+          in: path
+          description: ID of order that needs to be denied
+          required: true
+          schema:
+            type: integer
+            format: int64
       responses:
         '200':
           description: successful operation
@@ -509,8 +532,6 @@ paths:
                   $ref: '#/components/schemas/OrderData'
         '401':
           description: User must be logged in
-        '404':
-          description: Not found
       security:
         - crbooking_auth: []
 
@@ -535,9 +556,6 @@ components:
         email:
           type: string
           example: beb@email.com
-        password:
-          type: string
-          example: '12345'
         phone:
           type: string
           example: '+380098765432'

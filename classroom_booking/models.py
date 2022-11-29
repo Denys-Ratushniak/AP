@@ -39,10 +39,8 @@ class Order(BaseModel):
 	id = Column(Integer, primary_key=True)
 	classroomId = Column(Integer, ForeignKey("classroom.id"))
 	userId = Column(Integer, ForeignKey("user.id"))
-
 	classroom = relationship(Classroom, foreign_keys=[classroomId], backref='classroom', lazy="joined")
 	user = relationship(User, foreign_keys=[userId], backref='user', lazy="joined")
-
 	start_time = Column(DateTime)
 	end_time = Column(DateTime)
 	orderStatus = Column(Enum('placed', 'denied'), default='placed')
