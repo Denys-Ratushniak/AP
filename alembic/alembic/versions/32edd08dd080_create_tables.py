@@ -34,7 +34,7 @@ def upgrade() -> None:
     op.create_table(
         'classroom',
         sa.Column('id', sa.Integer, primary_key=True),
-        sa.Column('name', sa.VARCHAR(128)),
+        sa.Column('name', sa.VARCHAR(32)),
         sa.Column('classroomStatus', sa.Enum('available', 'unavailable'), default='available'),
         sa.Column('capacity', sa.Integer)
     )
