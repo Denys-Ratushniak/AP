@@ -44,11 +44,11 @@ paths:
           description: User with entered username already exists
 
   /user/login:
-    get:
+    ANY:
       tags:
         - user
       summary: Gives user access to others methods
-      description: Gives previously registered user access to others methods
+      description: Gives previously registered user access to others methods, this method is used by other methods, it doesnt login user directly
       operationId: loginUser
       parameters:
         - name: username

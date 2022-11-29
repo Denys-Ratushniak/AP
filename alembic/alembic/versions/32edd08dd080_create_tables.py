@@ -40,7 +40,7 @@ def upgrade() -> None:
     )
 
     op.create_table(
-        'order_table',
+        'order',
         sa.Column('id', sa.Integer, primary_key=True),
         sa.Column('classroomId', sa.Integer, sa.ForeignKey("classroom.id")),
         sa.Column('userId', sa.Integer, sa.ForeignKey("user.id")),

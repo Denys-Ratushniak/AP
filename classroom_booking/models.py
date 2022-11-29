@@ -35,7 +35,7 @@ class Classroom(BaseModel):
 
 
 class Order(BaseModel):
-	__tablename__ = "order_table"
+	__tablename__ = "order"
 	id = Column(Integer, primary_key=True)
 	classroomId = Column(Integer, ForeignKey("classroom.id"))
 	userId = Column(Integer, ForeignKey("user.id"))
