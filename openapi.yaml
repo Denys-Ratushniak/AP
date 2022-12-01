@@ -307,7 +307,8 @@ paths:
         '404':
           description: Not found
       security:
-        - crbooking_auth: []
+        - crbooking_auth:
+            - admin
     put:
       tags:
         - classroom
@@ -370,30 +371,40 @@ paths:
         - crbooking_auth:
             - admin
 
-  /booking/inventory:
+  /booking/findByStatus:
     get:
       tags:
-        - booking
-      summary: Returns classroom inventories by status
-      description: Returns a list of inventories by status
-      operationId: getInventory
+        - classroom
+      summary: Finds Orders by status
+      description: Multiple status values can be provided with comma separated strings
+      operationId: findOrdersByStatus
+      parameters:
+        - name: status
+          in: query
+          description: Status values that need to be considered for filter
+          required: true
+          schema:
+            type: array
+            items:
+              enum:
+                - placed
+                - denied
       responses:
         '200':
           description: successful operation
           content:
             application/json:
               schema:
-                type: object
-                additionalProperties:
-                  type: integer
-                  format: int32
+                type: array
+                items:
+                  $ref: '#/components/schemas/OrderData'
         '400':
-          description: Invalid input data
+          description: Invalid status value
         '401':
-          description: admin has to be logged in
+          description: User has to be logged in admin
       security:
         - crbooking_auth:
-            - admin
+          - admin
 
   /booking/order:
     post:
@@ -655,7 +666,6 @@ components:
             - 0
             - 1
           example: 0
-
 
     OrderData:
       type: object
