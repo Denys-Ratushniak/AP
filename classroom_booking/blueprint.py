@@ -117,7 +117,7 @@ def admin_required(func):
 @api_blueprint.route("/login")
 @auth.verify_password
 def login(username, password):
-    if not db_utils.is_name_taken(User, username):
+    if username == '0' or not db_utils.is_name_taken(User, username):
         return False
 
     user = db_utils.get_entry_by_name(User, username)
@@ -271,18 +271,18 @@ def place_order():
         return status_response(jsonify({"error": "Booking time must be bigger or equal "
                                                  "than 1 hour and smaller or equal than 5 days"}), 400)
 
-    if not db_utils.is_classroom_free_in_range(request.json['classroomId'], d1, d2):
-        return status_response(jsonify({"error": "This classroom will be unavailable in entered period of time"}), 400)
-
     if not db_utils.is_id_taken(Classroom, request.json['classroomId']):
         return status_response(jsonify({"error": "Classroom with entered id does not found"}), 404)
+
+    if not db_utils.is_classroom_free_in_range(request.json['classroomId'], d1, d2):
+        return status_response(jsonify({"error": "This classroom will be unavailable in entered period of time"}), 400)
 
     order_ = db_utils.create_order(**order_data)
 
     return status_response(jsonify(OrderData().dump(order_)), 200)
 
 
-@api_blueprint.route('/booking/order/<int:order_id>', methods=["GET", "DELETE"])
+@api_blueprint.route('/booking/order/<int:order_id>', methods=["GET", "PUT"])
 @auth.login_required
 def order(order_id):
     db_utils.reload_classroom_statuses()
@@ -299,7 +299,7 @@ def order(order_id):
     if request.method == "GET":
         return status_response(jsonify(OrderData().dump(order_)), 200)
 
-    if request.method == "DELETE":
+    if request.method == "PUT":
         order_data = {"orderStatus": "denied"}
         db_utils.update_entry(order_, **order_data)
 
@@ -332,7 +332,7 @@ def get_all_orders(userid):
     return status_response(jsonify(ans), 200)
 
 
-@api_blueprint.route('/booking/inventory', methods=["GET"])
+@api_blueprint.route('/booking/findByStatus', methods=["GET"])
 @auth.login_required
 @admin_required
 def get_orders_by_status():

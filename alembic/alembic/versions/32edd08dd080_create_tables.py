@@ -34,13 +34,13 @@ def upgrade() -> None:
     op.create_table(
         'classroom',
         sa.Column('id', sa.Integer, primary_key=True),
-        sa.Column('name', sa.VARCHAR(128)),
+        sa.Column('name', sa.VARCHAR(32)),
         sa.Column('classroomStatus', sa.Enum('available', 'unavailable'), default='available'),
-        sa.Column('capacity', sa.Integer)
+        sa.Column('capacity', sa.SmallInteger)
     )
 
     op.create_table(
-        'order_table',
+        'order',
         sa.Column('id', sa.Integer, primary_key=True),
         sa.Column('classroomId', sa.Integer, sa.ForeignKey("classroom.id")),
         sa.Column('userId', sa.Integer, sa.ForeignKey("user.id")),

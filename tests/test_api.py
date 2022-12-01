@@ -164,6 +164,7 @@ class TestUserSelf(BaseTestCase):
             "phone": self.user1_data["phone"],
             "birthDate": self.user1_data["birthDate"],
             "isAdmin": self.user1_data["isAdmin"],
+            'id': ANY,
             "code": 200,
         })
 
@@ -184,6 +185,7 @@ class TestUserSelf(BaseTestCase):
             "phone": self.update_user_valid["phone"],
             "birthDate": self.user1_data["birthDate"],
             "userStatus": 1,
+            "id": ANY,
             "code": 200,
         })
 
@@ -203,6 +205,7 @@ class TestUserSelf(BaseTestCase):
             "phone": self.user1_data["phone"],
             "birthDate": self.user1_data["birthDate"],
             "isAdmin": self.user1_data["isAdmin"],
+            "id": ANY,
             "code": 200,
         })
 
@@ -251,6 +254,7 @@ class TestCreateUser(BaseTestCase):
             "phone": self.user2_data["phone"],
             "birthDate": self.user2_data["birthDate"],
             "code": 200,
+            "id": ANY,
             "isAdmin": ANY
         })
         self.assertTrue(
@@ -275,6 +279,7 @@ class TestGetUserById(BaseTestCase):
             "phone": self.user1_data["phone"],
             "birthDate": self.user1_data["birthDate"],
             "userStatus": ANY,
+            "id": ANY,
             "code": 200,
         })
 
@@ -314,6 +319,7 @@ class TestActionUserByUsername(BaseTestCase):
             "phone": self.user1_data["phone"],
             "birthDate": self.user1_data["birthDate"],
             "userStatus": ANY,
+            "id": ANY,
             "code": 200,
         })
 
@@ -345,6 +351,7 @@ class TestActionUserByUsername(BaseTestCase):
             "phone": self.user1_data["phone"],
             "birthDate": self.user1_data["birthDate"],
             "userStatus": 0,
+            "id": ANY,
             "code": 200,
         })
 
@@ -374,6 +381,7 @@ class TestCreateClassroom(BaseTestCase):
             "name": self.classroom1_data["name"],
             "capacity": self.classroom1_data["capacity"],
             "classroomStatus": "available",
+            "id": ANY,
             "code": 200
         })
         self.assertTrue(
@@ -411,12 +419,14 @@ class TestGetClassroomsByStatus(BaseTestCase):
             {
                 "capacity": self.classroom1_data["capacity"],
                 "classroomStatus": "available",
-                "name": self.classroom1_data["name"]
+                "name": self.classroom1_data["name"],
+                "id": ANY
             },
             {
                 "capacity": self.classroom2_data["capacity"],
                 "classroomStatus": "available",
-                "name": self.classroom2_data["name"]
+                "name": self.classroom2_data["name"],
+                "id": ANY
             },
             {
                 "code": 200
@@ -454,6 +464,7 @@ class TestActionClassroom(BaseTestCase):
             "name": self.classroom1_data["name"],
             "capacity": self.classroom1_data["capacity"],
             "classroomStatus": ANY,
+            "id": ANY,
             "code": 200
         })
 
@@ -484,6 +495,7 @@ class TestActionClassroom(BaseTestCase):
             "name": self.classroom1_update_data["name"],
             "capacity": self.classroom1_data["capacity"],
             "classroomStatus": ANY,
+            "id": ANY,
             "code": 200
         })
 
@@ -525,6 +537,7 @@ class TestCreateOrder(BaseTestCase):
             "end_time": end_time,
             "orderStatus": "placed",
             "code": 200,
+            "id": ANY,
             "userId": 1
         })
         self.assertTrue(
@@ -572,12 +585,14 @@ class TestGetOrdersByStatus(BaseTestCase):
              "start_time": start_time1,
              "end_time": end_time1,
              "orderStatus": ANY,
+             "id": ANY,
              "userId": self.order1_data_with_userid["userId"]
              },
             {"classroomId": self.order2_data_with_userid["classroomId"],
              "start_time": start_time2,
              "end_time": end_time2,
              "orderStatus": ANY,
+             "id": ANY,
              "userId": self.order2_data_with_userid["userId"]
              },
             {"code": 200}
@@ -603,15 +618,16 @@ class TestActionOrder(BaseTestCase):
             "end_time": end_time,
             "orderStatus": "placed",
             "code": 200,
+            "id": ANY,
             "userId": 1
         })
 
-    def test_delete_order_by_id(self):
+    def test_update_order_by_id(self):
         db_utils.create_entry(User, **self.user1_data_hashed)
         db_utils.create_entry(Classroom, **self.classroom1_data)
         db_utils.create_order(**self.order1_data_with_userid)
 
-        resp = self.client.delete(
+        resp = self.client.put(
             url_for("api.order", order_id=1),
             headers=self.get_auth_basic(self.user1_credentials)
         )
@@ -625,6 +641,7 @@ class TestActionOrder(BaseTestCase):
             "end_time": end_time,
             "orderStatus": "denied",
             "code": 200,
+            "id": ANY,
             "userId": 1
         })
 
@@ -651,12 +668,14 @@ class TestGetOrders(BaseTestCase):
             "start_time": start_time1,
             "end_time": end_time1,
             "orderStatus": ANY,
+            "id": ANY,
             "userId": 1
         }, {
             "classroomId": self.order2_data["classroomId"],
             "start_time": start_time2,
             "end_time": end_time2,
             "orderStatus": ANY,
+            "id": ANY,
             "userId": 1
         },
             {"code": 200}])
