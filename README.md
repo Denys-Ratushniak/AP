@@ -25,4 +25,4 @@
 8) Run server. Go to ..\AP\flask_project and use command: python app.py 
 
 
-9) Go to http://localhost:5000/api/v1/hello-world-7 in your browser 
+9) Create databse, change connection to your database in files, and use)
