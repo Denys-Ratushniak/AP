@@ -127,9 +127,16 @@ def login(username, password):
     return False
 
 
+@api_blueprint.route("/user_login")
+@auth.login_required()
+def user_login():
+    return status_response(jsonify({"message": "Successfully signed in"}), 200)
+
+
 @api_blueprint.route('/user', methods=["POST"])
 def create_user():
     user_data = CreateUser().load(request.json)
+
     if db_utils.is_name_taken(User, user_data["username"]):
         return status_response(jsonify({"error": "User with entered username already exists"}), 402)
 
@@ -202,7 +209,7 @@ def create_classroom():
     return status_response(jsonify(ClassroomData().dump(user)), 200)
 
 
-@api_blueprint.route('/classroom/findByStatus', methods=["GET"])
+@api_blueprint.route('/classroom/findByStatus', methods=["POST"])
 @auth.login_required
 def find_classroom_by_status():
     if not validate_statuses(request.json["status"]):
