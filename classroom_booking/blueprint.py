@@ -121,10 +121,17 @@ def login(username, password):
         return False
 
     user = db_utils.get_entry_by_name(User, username)
+
     if check_password_hash(user.password, password):
         return True
 
     return False
+
+
+@api_blueprint.route("/user_login")
+@auth.login_required()
+def user_login():
+    return status_response(jsonify({"message": "Successfully signed in"}), 200)
 
 
 @api_blueprint.route('/user', methods=["POST"])
@@ -202,7 +209,7 @@ def create_classroom():
     return status_response(jsonify(ClassroomData().dump(user)), 200)
 
 
-@api_blueprint.route('/classroom/findByStatus', methods=["GET"])
+@api_blueprint.route('/classroom/findByStatus', methods=["POST"])
 @auth.login_required
 def find_classroom_by_status():
     if not validate_statuses(request.json["status"]):
@@ -265,9 +272,9 @@ def place_order():
     d2 = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
 
     if d1 > d2:
-        return status_response(jsonify({"error": "start_time must be earlier than end_time"}), 400)
+        return status_response(jsonify({"error": "Start time must be earlier than End time"}), 400)
 
-    if (d2 - d1).seconds < 3600 or (d2 - d1).seconds > 5 * 24 * 3600:
+    if (d2 - d1).total_seconds() < 3600 or (d2 - d1).total_seconds() > 5 * 24 * 3600:
         return status_response(jsonify({"error": "Booking time must be bigger or equal "
                                                  "than 1 hour and smaller or equal than 5 days"}), 400)
 
@@ -282,13 +289,11 @@ def place_order():
     return status_response(jsonify(OrderData().dump(order_)), 200)
 
 
-@api_blueprint.route('/booking/order/<int:order_id>', methods=["GET", "PUT"])
+@api_blueprint.route('/booking/order/<int:order_id>', methods=["GET", "DELETE"])
 @auth.login_required
 def order(order_id):
     db_utils.reload_classroom_statuses()
-
     order_ = db_utils.get_entry_by_id(Order, order_id)
-
     username = auth.current_user()
     user = db_utils.get_entry_by_name(User, username)
     selfid = user.id
@@ -299,7 +304,7 @@ def order(order_id):
     if request.method == "GET":
         return status_response(jsonify(OrderData().dump(order_)), 200)
 
-    if request.method == "PUT":
+    if request.method == "DELETE":
         order_data = {"orderStatus": "denied"}
         db_utils.update_entry(order_, **order_data)
 
@@ -313,8 +318,21 @@ def get_self_orders():
     db_utils.reload_classroom_statuses()
     user = db_utils.get_entry_by_name(User, username)
     userid = user.id
-    orders = db_utils.find_orders_by_userid(userid)
+    orders = db_utils.find_placed_orders_by_userid(userid)
     ans = [OrderData().dump(x) for x in orders]
+
+    for el in ans:
+        end_time = el['end_time']
+        end_time = end_time[:10] + ' ' + end_time[12:]
+        el['end_time'] = end_time
+
+        start_time = el['start_time']
+        start_time = start_time[:10] + ' ' + start_time[12:]
+        el['start_time'] = start_time
+
+        classroom = db_utils.get_entry_by_id(Classroom, el['classroomId'])
+        el['classroom_name'] = classroom.name
+        el['classroom_capacity'] = classroom.capacity
 
     return status_response(jsonify(ans), 200)
 
