@@ -82,6 +82,10 @@ def find_orders_by_userid(userid):
     return session.query(Order).filter_by(userId=userid).all()
 
 
+def find_placed_orders_by_userid(userid):
+    session = Session()
+    return session.query(Order).filter_by(userId=userid, orderStatus='placed').all()
+
 def reload_classroom_statuses(commit=True):
     session = Session()
     current_time = datetime.now()
